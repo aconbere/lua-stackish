@@ -1,0 +1,20 @@
+# Lua Stackish
+
+This is a tiny stackish parser written in lua. Stackish is a simple stackbased language for describing structured data, you can read about [stackish](http://zedshaw.com/essays/stackish_xml_alternative.html) at Zed Shaw's website. This particular project was just an excuse to write a parser for a tiny language, and play with my pre-existing fascination with Forth.
+
+# How to use it
+
+```lua
+local stackish = require("stackish")
+
+local result = stackish.parse([[ [ "abcd" [ "1234 " 5678 454.234 root things ]]))
+stackish.print_table(result)
+```
+
+    things:
+     "abcd"
+     root:
+      454.234
+      5678
+      "1234 "
+
