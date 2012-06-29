@@ -179,34 +179,56 @@ local function map(itterable, f)
   return res
 end
 
-local function parse_ast(ast, _table, depth)
-  if not depth then
-    depth = 0
-  end
-
-  if not _table then
-    _table = {}
-  end
-
+local function parse_ast(ast, stack, depth)
   if #ast <= 0 then
-    return _table
+    return nil, stack
   end
 
-  local current = table.remove(ast)
+  local current = table.remove(ast, 1)
 
-  if current.__type == types.mark then
-    return _table
-  elseif current.__type == types.word then
-    _table[current.value] = parse_ast(ast, {}, depth+1)
-    return parse_ast(ast, _table, depth)
+  if current.__type == types.word then
+    return current.value, stack
+  elseif current.__type == types.mark then
+    local name, _stack = parse_ast(ast, {}, depth+1)
+    stack[name] = _stack
   else
-    table.insert(_table, current.value)
-    return parse_ast(ast, _table, depth)
+    table.insert(stack, current.value)
   end
+
+  return parse_ast(ast, stack, depth)
 end
 
 local function parse(input)
-  return parse_ast(tokenize(input))
+  _name, stack = parse_ast(tokenize(input), {}, 0)
+  return stack
+end
+
+local function serialize_string(value)
+  return "\""..value.."\""
+end
+
+local function serialize_number(value)
+  return tostring(value)
+end
+
+local function serialize_table(value)
+  stack = {}
+  for i,v in pairs(value) do
+    local typei = type(i)
+    local typev = type(v)
+
+    if typei == "number" then
+      if typev == "string" then
+        table.insert(stack, serialize_string(v))
+      elseif typev == "number" then
+        table.insert(stack, serialize_number(v))
+      end
+    elseif typei == "string" then
+      if typev == "table" then
+      else
+      end
+    end
+  end
 end
 
 return { print_table = print_table
