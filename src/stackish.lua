@@ -44,13 +44,7 @@ local function print_element(v)
   print("el", v.__type.name, v.value)
 end
 
-local function print_stack(t)
-  for i,v in pairs(t) do
-    print_element(v)
-  end
-end
-
-local function print_table(t, depth)
+local function print_stack(t, depth)
   if not depth then
     depth = 0
   end
@@ -58,7 +52,7 @@ local function print_table(t, depth)
   for i,v in pairs(t) do
     if type(v) == "table" then
       print(string.rep(" ", depth)..tostring(i)..":")
-      print_table(v, depth+1)
+      print_stack(v, depth+1)
     elseif type(v) == "string" then
       print(string.rep(" ", depth).."\""..v.."\"")
     else
@@ -211,8 +205,12 @@ local function serialize_number(value)
   return tostring(value)
 end
 
+local function serialize_mark(value)
+  return value
+end
+
 local function serialize_table(value)
-  stack = {}
+  local stack = {}
   for i,v in pairs(value) do
     local typei = type(i)
     local typev = type(v)
@@ -222,16 +220,26 @@ local function serialize_table(value)
         table.insert(stack, serialize_string(v))
       elseif typev == "number" then
         table.insert(stack, serialize_number(v))
+      else
+        error("unserializable input: "..tostring(v))
       end
     elseif typei == "string" then
       if typev == "table" then
+        table.insert(stack, "[")
+        table.insert(stack, serialize_table(v))
+        table.insert(stack, i)
       else
+        error("unserializable input: "..tostring(v))
       end
+    else
+      error("unserializable input: "..tostring(v))
     end
   end
+  return table.concat(stack, " ")
 end
 
-return { print_table = print_table
-       , parse       = parse
-       , tokenize    = tokenize
+return { print_stack     = print_stack
+       , parse           = parse
+       , tokenize        = tokenize
+       , serialize_table = serialize_table
        }
